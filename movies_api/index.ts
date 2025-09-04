@@ -10,18 +10,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const ratingsDB = new Database('./movies_api/db/ratings.db', OPEN_READONLY, (err: Error | null) => {
-    if (err) {
-        console.error('Error opening database:', err.message);
-    } else {
-        console.log('Database opened successfully');
-    }
+  if (err) {
+    console.error('Error opening database:', err.message);
+  } else {
+    console.log('Ratings database opened successfully');
+  }
 });
 
 const moviesDB = new Database('./movies_api/db/movies.db', OPEN_READONLY, (err: Error | null) => {
   if (err) {
     console.error('Error opening database:', err.message);
   } else {
-    console.log('Database opened successfully');
+    console.log('Movies database opened successfully');
   }
 });
 
@@ -32,7 +32,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/genres/all', (req: Request, res: Response) => { 
-  genres.getGenreList(moviesDB, req, res)
+  genres.getGenreList(moviesDB, req, res);
 });
 
 app.get('/heartbeat', (req: Request, res: Response) => { 
@@ -40,17 +40,24 @@ app.get('/heartbeat', (req: Request, res: Response) => {
 });
 
 app.get('/ratings/:movieId', (req: Request, res: Response) => {
-  ratings.getRating(ratingsDB, req, res)
+  ratings.getRating(ratingsDB, req, res);
 });
 
 app.get('/movies/all', (req: Request, res: Response) => {
-  movies.getAllMovies(moviesDB, req, res)
+  movies.getAllMovies(moviesDB, req, res);
+});
+
+app.get('/movies/year/:year', (req: Request, res: Response) => {
+  movies.getMoviesByYear(moviesDB, req, res);
 });
 
 app.get('/movies/:movieId', (req: Request, res: Response) => {
-  movies.getMovie(moviesDB, req, res)
+  movies.getMovie(moviesDB, req, res);
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+app.get('/movies/genre/:genre', (req: Request, res: Response) => {
+  movies.getMoviesByGenre(moviesDB, req, res);
 });
+
+
+export default app;
