@@ -8,12 +8,10 @@ export const getMoviesByGenre = (db: Database, req: Request, res: Response): voi
 
   db.all(query, [genrePattern, limit, offset], (err: Error | null, rows: any[]) => {
     if (err) {
-      res.status(500).send(JSON.stringify(err));
-      return;
+      return res.status(500).json({ error: 'Database error', details: err.message });
     }
-    if (rows.length === 0) {
-      res.status(404).send('No movies found for this genre');
-      return;
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'Not Found', message: 'No movies found for this genre' });
     }
     const movies = rows.map(row => ({
       movieId: row.movieId,
@@ -23,7 +21,7 @@ export const getMoviesByGenre = (db: Database, req: Request, res: Response): voi
       releaseDate: row.releaseDate,
       budget: row.budget ? `$${Number(row.budget).toLocaleString()}` : null
     }));
-    res.send({ genre, page, movies });
+    res.json({ genre, page, movies });
   });
 };
 export const getMoviesByYear = (db: Database, req: Request, res: Response): void => {
@@ -36,12 +34,10 @@ export const getMoviesByYear = (db: Database, req: Request, res: Response): void
 
   db.all(query, [year, limit, offset], (err: Error | null, rows: any[]) => {
     if (err) {
-      res.status(500).send(JSON.stringify(err));
-      return;
+      return res.status(500).json({ error: 'Database error', details: err.message });
     }
-    if (rows.length === 0) {
-      res.status(404).send('No movies found for this year');
-      return;
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'Not Found', message: 'No movies found for this year' });
     }
     const movies = rows.map(row => ({
       movieId: row.movieId,
@@ -51,7 +47,7 @@ export const getMoviesByYear = (db: Database, req: Request, res: Response): void
       releaseDate: row.releaseDate,
       budget: row.budget ? `$${Number(row.budget).toLocaleString()}` : null
     }));
-    res.send({ year, page, sort, movies });
+    res.json({ year, page, sort, movies });
   });
 };
 'use strict';
@@ -67,26 +63,20 @@ export const getAllMovies = (db: Database, req: Request, res: Response): void =>
 
   db.all(query, [limit, offset], (err: Error | null, rows: any[]) => {
     if (err) {
-      res.status(500).send(JSON.stringify(err));
-      return; 
+      return res.status(500).json({ error: 'Database error', details: err.message });
     }
-
-    console.log(rows);
-    if (rows.length === 0) {
-      res.status(404).send('No movies found'); 
-      return; 
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'Not Found', message: 'No movies found' });
     }
-
-    
     const movies = rows.map(row => ({
       movieId: row.movieId,
       imdbId: row.imdbId,
       title: row.title,
-      genres: row.genres,
+      genres: JSON.parse(row.genres),
       releaseDate: row.releaseDate,
       budget: row.budget ? `$${Number(row.budget).toLocaleString()}` : null
     }));
-    res.send({ page, movies });
+    res.json({ page, movies });
   });
 };
 
@@ -96,18 +86,12 @@ export const getMovie = (db: Database, req: Request, res: Response): void => {
 
   db.get(query, [req.params.movieId], async (err: Error | null, row: any) => {
     if (err) {
-      res.status(500).send(JSON.stringify(err));
-      return;
+      return res.status(500).json({ error: 'Database error', details: err.message });
     }
     if (!row) {
-      res.status(404).send('Movie not found');
-      return;
+      return res.status(404).json({ error: 'Not Found', message: 'Movie not found' });
     }
-
-    
     row.budget = row.budget ? `$${Number(row.budget).toLocaleString()}` : null;
-
-    
     const ratings: any[] = [];
     try {
       // Local ratings API
@@ -120,8 +104,7 @@ export const getMovie = (db: Database, req: Request, res: Response): void => {
       ratings.push({ source: 'local', error: 'Could not fetch local ratings' });
     }
     try {
-      
-      const omdbRes = await fetch(`https://www.omdbapi.com/?i=${row.imdbId}&apikey=YOUR_API_KEY`);
+      const omdbRes = await fetch(`https://www.omdbapi.com/?i=${row.imdbId}&apikey=e49713a`);
       if (omdbRes.ok) {
         const omdbData = await omdbRes.json();
         const rtRating = omdbData.Ratings?.find((r: any) => r.Source === 'Rotten Tomatoes');
@@ -130,8 +113,7 @@ export const getMovie = (db: Database, req: Request, res: Response): void => {
     } catch (e) {
       ratings.push({ source: 'OMDB', error: 'Could not fetch OMDB rating' });
     }
-
-    res.send({
+    res.json({
       movieId: row.movieId,
       imdbId: row.imdbId,
       title: row.title,

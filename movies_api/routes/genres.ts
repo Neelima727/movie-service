@@ -8,27 +8,28 @@ export const getGenreList = (db: Database, req: Request, res: Response): void =>
 
   db.all(query, [], (err: Error | null, rows: any[]) => {
     if (err) {
-      res.status(500).send(JSON.stringify(err));
-      return; // Ensure to return after sending a response
+      return res.status(500).json({ error: 'Database error', details: err.message });
     }
-
-    console.log(rows);
-    if (rows.length === 0) {
-      res.status(404).send('No movies found'); // Send a response for 404
-      return; // Ensure to return after sending a response
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'Not Found', message: 'No movies found' });
     }
-
     const genreList: any[] = [];
-
     for (const row of rows) {
-      const genres = JSON.parse(row.genres);
-      for (const genre of genres) {
-        if (!genreList.find(listItem => listItem.name === genre.name)) {
-          genreList.push(genre);
+      try {
+        const genres = JSON.parse(row.genres);
+        for (const genre of genres) {
+          if (!genreList.find(listItem => listItem.name === genre.name)) {
+            genreList.push(genre);
+          }
         }
+      } catch (e) {
+        // Fallback: skip row if genres cannot be parsed
+        continue;
       }
     }
-
-    res.send(genreList);
+    if (genreList.length === 0) {
+      return res.status(404).json({ error: 'Not Found', message: 'No genres found' });
+    }
+    res.json(genreList);
   });
 };

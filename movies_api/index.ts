@@ -55,8 +55,25 @@ app.get('/movies/:movieId', (req: Request, res: Response) => {
   movies.getMovie(moviesDB, req, res);
 });
 
+
 app.get('/movies/genre/:genre', (req: Request, res: Response) => {
   movies.getMoviesByGenre(moviesDB, req, res);
+});
+// Catch-all 404 handler for unknown routes
+app.use((req: Request, res: Response, next: Function) => {
+  res.status(404).json({
+    error: 'Not Found',
+    message: 'The requested endpoint does not exist.'
+  });
+});
+
+// Centralized error handler (must be after all routes)
+app.use((err: any, req: Request, res: Response, next: Function) => {
+  console.error(err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    details: err.details || undefined
+  });
 });
 
 

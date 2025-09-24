@@ -6,17 +6,13 @@ import { Request, Response } from 'express';
 export const getRating = (db: Database, req: Request, res: Response): void => {
   const query = 'SELECT * FROM ratings WHERE movieId = ?';
 
-  db.all(query, [31], (err: Error | null, rows: any[]) => {
+  db.all(query, [req.params.movieId], (err: Error | null, rows: any[]) => {
     if (err) {
-      res.status(500).send(JSON.stringify(err));
-      return; // Ensure to return after sending a response
+      return res.status(500).json({ error: 'Database error', details: err.message });
     }
-
-    if (rows.length === 0) {
-      res.status(404).send('No ratings found'); // Send a response for 404
-      return; // Ensure to return after sending a response
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'Not Found', message: 'No ratings found' });
     }
-
-    res.send(rows);
+    res.json(rows);
   });
 };
